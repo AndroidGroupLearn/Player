@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mMediaPlayer;
     private Equalizer mEqualizer;
 
-    private Handler handler;
+    private static Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,10 +82,9 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Thread.sleep(1000);
                     time[1]++;
-                    if(time[1] == 60)
-                    {
+                    if (time[1] == 60) {
                         time[0]++;
-                        time[1]=0;
+                        time[1] = 0;
                     }
                     handler.sendMessage(handler.obtainMessage());
                 } catch (InterruptedException e) {
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         table = new TableLayout(this);
         table.setLayoutParams(linearLayoutParams);
         headText = new TextView(this);
-        headText.setText("Equalizer");
+        headText.setText("RYBA |>()");
         headText.setTextSize(20);
         headText.setGravity(Gravity.CENTER_HORIZONTAL);
         headText.setLayoutParams(tableRowParams);
@@ -137,12 +137,51 @@ public class MainActivity extends AppCompatActivity {
         short numberFrequency = mEqualizer.getNumberOfBands();
         final short lower = mEqualizer.getBandLevelRange()[0];
         final short upper = mEqualizer.getBandLevelRange()[1];
+        //Eq
         for(short counter = 0; counter < numberFrequency; ++counter) {
+            final short bandLevel = counter;
             TextView frequencyTextView = new TextView(this);
             frequencyTextView.setLayoutParams(tableRowParams);
-            frequencyTextView.setText(mEqualizer.getCenterFreq(counter)/1000 + "Hz");
+            frequencyTextView.setText(mEqualizer.getCenterFreq(bandLevel)/1000 + "Hz");
+            frequencyTextView.setGravity(Gravity.CENTER);
             rows.add(new TableRow(this));
             rows.lastElement().addView(frequencyTextView);
+            table.addView(rows.lastElement());
+            TextView lowerBand = new TextView(this);
+            lowerBand.setLayoutParams(new TableRow.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            lowerBand.setGravity(Gravity.CENTER);
+            lowerBand.setText((lower/100) + "dB");
+            TextView upperBand = new TextView(this);
+            upperBand.setLayoutParams(new TableRow.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,1));
+            upperBand.setText((upper/100) + "dB");
+            upperBand.setGravity(Gravity.CENTER);
+
+            //bar
+            SeekBar seekBar = new SeekBar(this);
+            seekBar.setId(counter);
+            seekBar.setLayoutParams(new TableRow.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 2));
+            seekBar.setMax(upper-lower);
+            seekBar.setProgress((upper-lower)/2);
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                    mEqualizer.setBandLevel(bandLevel, (short) (i + lower));
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
+            rows.add(new TableRow(this));
+            rows.lastElement().addView(lowerBand);
+            rows.lastElement().addView(seekBar);
+            rows.lastElement().addView(upperBand);
             table.addView(rows.lastElement());
         }
         mLinearLayout.addView(table);

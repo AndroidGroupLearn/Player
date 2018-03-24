@@ -5,7 +5,5 @@
     android:layout_height="match_parent"
     android:id="@+id/LinearLinearLayout"
     android:orientation="horizontal">
-
-
 </LinearLayout>
 </android.support.constraint.ConstraintLayout>
