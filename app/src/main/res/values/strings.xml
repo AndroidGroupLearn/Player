@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">MusicPlayer</string>
+    <string name="play"><![CDATA[>]]></string>
+    <string name="rewind"><![CDATA[<<]]></string>
+    <string name="forward"><![CDATA[>>]]></string>
+    <string name="pause">||</string>
+    <string name="message_permission">Musisz zezwolic by aplikacja miałą dotep do twojej muzyki, ktora najdje sie na karcie SD</string>
+    <string name="loading">Loading Files</string>
 </resources>

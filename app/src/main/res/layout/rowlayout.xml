@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="40sp"
+        android:layout_height="40sp"
+        android:layout_marginLeft="4px"
+        android:layout_marginRight="10px"
+        android:layout_marginTop="4px"
+        android:src="@drawable/ic_music" >
+    </ImageView>
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TableRow>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Artist: "
+                android:textSize="17sp" >
+            </TextView>
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NaNNanNaNNaNNaNNaN"
+                android:textSize="17sp"
+                android:id="@+id/nameArtist"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name: "
+                android:textSize="17sp" >
+            </TextView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NaNNanNaNNaNNaNNaN"
+                android:textSize="17sp"
+                android:id="@+id/nameSong">
+            </TextView>
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>
