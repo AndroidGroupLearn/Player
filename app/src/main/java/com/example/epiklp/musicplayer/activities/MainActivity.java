@@ -2,12 +2,10 @@ package com.example.epiklp.musicplayer.activities;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.BassBoost;
@@ -19,37 +17,25 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 
-import com.example.epiklp.musicplayer.Functions;
-import com.example.epiklp.musicplayer.MusicService;
+import com.example.epiklp.musicplayer.Service.MusicService;
 import com.example.epiklp.musicplayer.R;
 import com.example.epiklp.musicplayer.Values;
-
-import java.util.Comparator;
-import java.util.HashMap;
+import com.example.epiklp.musicplayer.adapter.SongAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
     private final int PERMISSION_READ_EXTERNAL_STORAGE = 123;
 
     //look
-    private TextView        currentText;
-    private SeekBar         progressBar;
-    private String          timeSong;
+    private TextView        timeText;
+    private SeekBar         seekBar;
     private Button          backButton, playButton, forwardButton;
 
     private static Handler  handler;
@@ -83,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             playWithPermission();
         }
-        initButtons();
+        //initProgressBar();
     }
 
     //Zapytanie o zgode wczytywania z SD
@@ -125,58 +111,67 @@ public class MainActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mIntent = new Intent(getApplicationContext(), mySettings.class);
+                mIntent = new Intent(getApplicationContext(), SettingsActivity.class);
                 startActivity(mIntent);
             }
         });
 
         backButton = (Button) findViewById(R.id.back);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Values.mMusicService.playPrev();
+            }
+        });
         playButton = (Button) findViewById(R.id.play);
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(Values.mMusicService.isPlaying()){
+                if(!Values.mMusicService.isStarted()){
+                    Values.mMusicService.playSong();
+                    new Thread(new Task()).start();
+                    Values.mMusicService.setIsStarted();
+                    playButton.setText(getString(R.string.pause));
+                } else if(Values.mMusicService.isPlaying()){
                     playButton.setText(getString(R.string.play));
-                    if(Values.mMediaPlayer == null) {
-                        Values.mMediaPlayer.pause();
-                    } else {
-                        Values.mMusicService.pause();
-                    }
+                    Values.mMusicService.pause();
                 } else {
                     playButton.setText(getString(R.string.pause));
-                    Values.mMusicService.playSong();
+                    Values.mMusicService.start();
                 }
             }
         });
         forwardButton = (Button) findViewById(R.id.forward);
+        forwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Values.mMusicService.playNext();
+            }
+        });
     }
 
 
 
     public void playWithPermission() {
-        Functions.findSong(this);
+        //Functions.findSong(this);
+        Values.mSongList.scanSong(this, "external");
         ListView mListView = findViewById(R.id.musicList);
-        //mListView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-          //                              LinearLayout.LayoutParams.MATCH_PARENT));
-        SongAdapter songAdapter = new SongAdapter(this, Values.mSongList);
-        mListView.setAdapter(songAdapter);
-        Values.mMusicService = new MusicService(getApplicationContext());
-        Values.mMusicService.setList(Values.mSongList);
-        /*Values.mMediaPlayer = MediaPlayer.create(this, R.raw.music);
-        Values.mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Values.mMusicService.setSongPos(position);
+                //Toast.makeText(getApplicationContext(), Integer.toString(position), Toast.LENGTH_LONG).show();
             }
         });
-
-        Values.mMediaPlayer.setLooping(true);
-        Values.mEqualizer = new Equalizer(0, Values.mMediaPlayer.getAudioSessionId());
-        Values.mEqualizer.setEnabled(Values.mEqualizerTurn);
-        Values.mBassBoost = new BassBoost(0, Values.mMediaPlayer.getAudioSessionId());
-        Values.mBassBoost.setEnabled(Values.mBassBoostTurn);
-        initProgressBar();*/
-
+        SongAdapter songAdapter = new SongAdapter(this, Values.mSongList.getSongs());
+        mListView.setAdapter(songAdapter);
+        Values.mMusicService = new MusicService(this);
+        Values.mMusicService.setList(Values.mSongList.getSongs());
+        Values.mEqualizer = new Equalizer(0, Values.mMusicService.getAudioSessionId());
+        Values.mBassBoost = new BassBoost(0, Values.mMusicService.getAudioSessionId());
+        initButtons();
+        registerReceiver(Values.mHeadSetReceiver, new IntentFilter("android.intent.action.HEADSET_PLUG"));
+        initSeekBar();
     }
 
     public void playWithOutPermission(){
@@ -193,14 +188,11 @@ public class MainActivity extends AppCompatActivity {
         Values.mEqualizer.setEnabled(Values.mEqualizerTurn);
         Values.mBassBoost = new BassBoost(0, Values.mMediaPlayer.getAudioSessionId());
         Values.mBassBoost.setEnabled(Values.mBassBoostTurn);
-        initProgressBar();
     }
 
-    public void initProgressBar() {
-        progressBar = (SeekBar) findViewById(R.id.progress);
-        progressBar.setMax(Values.mMediaPlayer.getDuration());
-        progressBar.setProgress(0);
-        progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+    public void initSeekBar() {
+        seekBar = (SeekBar) findViewById(R.id.progress);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
             }
@@ -212,27 +204,28 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                Values.mMediaPlayer.seekTo(seekBar.getProgress());
+                Values.mMusicService.seekTo(seekBar.getProgress());
             }
         });
-        currentText = (TextView) findViewById(R.id.timer);
-        timeSong = String.format("%02d:%02d", (Values.mMediaPlayer.getDuration()/(1000 * 60)) % 60 , (Values.mMediaPlayer.getDuration()/ 1000) % 60);
+        timeText = (TextView) findViewById(R.id.timer);
         handler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
-                    currentText.setText(String.format("%02d:%02d", (Values.mMediaPlayer.getCurrentPosition()/(1000 * 60)) % 60 , (Values.mMediaPlayer.getCurrentPosition()/ 1000) % 60) + "/"+timeSong);
-                progressBar.setProgress(Values.mMediaPlayer.getCurrentPosition());
+                if(Values.mMusicService.isPlaying()) {
+                    int position = Values.mMusicService.getPosition();
+                    int duration = Values.mMusicService.getDuration();
+                    timeText.setText(String.format("%02d:%02d", (position / (1000 * 60)) % 60,
+                            (position / 1000) % 60) + "/"
+                            + String.format("%02d:%02d", (duration / (1000 * 60)) % 60,
+                            (duration / 1000) % 60));
+                    seekBar.setProgress(position);
+                }
+                seekBar.setMax(Values.mMusicService.getDuration());
             }
         };
-        new Thread(new Task()).start();
+
     }
 
-    class loader implements Runnable{
-        @Override
-        public void run() {
-
-        }
-    }
 
     //Watek odpowiedzialny za timer oraz progresBar
     class Task implements Runnable {

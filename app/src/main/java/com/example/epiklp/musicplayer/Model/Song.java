@@ -1,4 +1,4 @@
-package com.example.epiklp.musicplayer;
+package com.example.epiklp.musicplayer.Model;
 
 import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;

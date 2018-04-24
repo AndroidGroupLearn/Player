@@ -1,9 +1,8 @@
-package com.example.epiklp.musicplayer;
+package com.example.epiklp.musicplayer.Service;
 
 import android.app.Activity;
 import android.app.Service;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -13,11 +12,13 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.support.annotation.Nullable;
-import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.epiklp.musicplayer.R;
+import com.example.epiklp.musicplayer.Model.Song;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -52,23 +53,30 @@ public class MusicService extends Service
         return false;
     }
 
+
+
     //MediaPlayer
     private MediaPlayer         mMediaPlayer;
     private ArrayList<Song>     mSongs;
     private Song                playSong;
-    private TextView            nameSong;
+    private TextView            nameSong, time;
+    private SeekBar             seekBar;
     private int                 mSongPos;
     private boolean             shuffle         = false;
     private boolean             loop            = false;
     private boolean             isStarted       = false;
+    private boolean             isPlaying;
     private Random              mRand;
 
     //Effects
     private Equalizer           mEqualizer;
 
     public MusicService(Activity c){
-        tmp = c;
         super.onCreate();
+        tmp = c;
+        nameSong = (TextView) tmp.findViewById(R.id.musicName);
+        time = (TextView) tmp.findViewById(R.id.timer);
+        seekBar = (SeekBar) tmp.findViewById(R.id.progress);
         mSongPos = 0;
         mRand = new Random();
         mMediaPlayer = new MediaPlayer();
@@ -88,6 +96,7 @@ public class MusicService extends Service
     }
 
     public void playSong(){
+        isPlaying = true;
         mMediaPlayer.stop();
         mMediaPlayer.reset();
         playSong = mSongs.get(mSongPos);
@@ -103,13 +112,13 @@ public class MusicService extends Service
             Toast.makeText(tmp.getApplicationContext(), "Playback Error", Toast.LENGTH_SHORT).show();
         }
         setTitle();
-        ProgressBar progressBar = (ProgressBar) tmp.findViewById(R.id.progress);
-    //    progressBar.setMax(mMediaPlayer.getDuration());
     }
 
     private void setTitle(){
         String name;
-        nameSong = (TextView) tmp.findViewById(R.id.musicName);
+        int duration = mSongs.get(mSongPos).getmDuration();
+        time.setText("00:00/" + String.format("%02d:%02d", (duration/(1000 * 60)) % 60 ,
+                (duration/ 1000) % 60));
         if(mSongs.get(mSongPos).getArtit().equals("unknowon")){
             name = mSongs.get(mSongPos).getTitle();
         } else {
@@ -124,11 +133,13 @@ public class MusicService extends Service
             playSong();
         } else {
             mMediaPlayer.start();
+            isPlaying = true;
         }
     }
 
     public void pause(){
         mMediaPlayer.pause();
+        isPlaying = false;
     }
 
     public void playPrev(){
@@ -157,7 +168,7 @@ public class MusicService extends Service
                 mSongPos = 0;
             }
         }
-        if(mMediaPlayer.isPlaying()) {
+        if(isPlaying) {
             playSong();
         } else {
             setTitle();
@@ -216,24 +227,18 @@ public class MusicService extends Service
         return mSongs.get(mSongPos);
     }
 
+    public int getAudioSessionId(){
+        return mMediaPlayer.getAudioSessionId();
+    }
+
 
 
 
     //Implementation
     @Override
     public void onCompletion(MediaPlayer mediaPlayer){
-        if(mediaPlayer.getCurrentPosition()>0){
-            mediaPlayer.reset();
-            playNext();
-        }
-        if(loop){
-            mediaPlayer.reset();
-            mSongPos = 0;
-            playSong();
-        }else {
-            mediaPlayer.reset();
-            mSongPos = 0;
-        }
+        mSongPos++;
+        playNext();
     }
 
     @Override
