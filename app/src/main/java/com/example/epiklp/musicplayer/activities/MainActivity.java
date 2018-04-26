@@ -6,11 +6,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteException;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
@@ -23,6 +25,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.epiklp.musicplayer.Service.MusicService;
 import com.example.epiklp.musicplayer.R;
@@ -36,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     //look
     private TextView        timeText;
     private SeekBar         seekBar;
-    private Button          backButton, playButton, forwardButton;
+    private Button          backButton, playButton, forwardButton, infoButton, loopButton;
 
     private static Handler  handler;
     private Button          settingsButton;
@@ -64,12 +67,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.media_player);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        if(Build.VERSION.SDK_INT >= 23) {
-            askAboutPermision();
+        Boolean isSDPresent = android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED);
+        if(isSDPresent) {
+            if (Build.VERSION.SDK_INT >= 23) {
+                askAboutPermision();
+            } else {
+                playWithPermission();
+            }
         } else {
-            playWithPermission();
+            playWithOutPermission();
         }
-        //initProgressBar();
     }
 
     //Zapytanie o zgode wczytywania z SD
@@ -148,46 +155,77 @@ public class MainActivity extends AppCompatActivity {
                 Values.mMusicService.playNext();
             }
         });
+        loopButton = findViewById(R.id.lr);
+        loopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Values.mMusicService.setShuffle();
+                if(Values.mMusicService.getShuffle()){
+                    loopButton.setText("SHUFFLE");
+                } else {
+                    loopButton.setText("LOOP");
+                }
+            }
+        });
+        infoButton = findViewById(R.id.information);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mIntent = new Intent(MainActivity.this, InfoActivity.class);
+                startActivity(mIntent);
+            }
+        });
     }
 
 
 
     public void playWithPermission() {
-        //Functions.findSong(this);
-        Values.mSongList.scanSong(this, "external");
-        ListView mListView = findViewById(R.id.musicList);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Values.mMusicService.setSongPos(position);
-                //Toast.makeText(getApplicationContext(), Integer.toString(position), Toast.LENGTH_LONG).show();
+            Values.mSongList.scanSong(this, "external");
+            Values.mSongList.scanSong(this, "internal");
+            Values.mMusicService = new MusicService(this);
+            Values.mMusicService.setList(Values.mSongList.getSongs());
+            if(Values.mMusicService.getSizeSong() > 0) {
+                ListView mListView = findViewById(R.id.musicList);
+                mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        Values.mMusicService.setSongPos(position);
+                    }
+                });
+                SongAdapter songAdapter = new SongAdapter(this, Values.mSongList.getSongs());
+                mListView.setAdapter(songAdapter);
+                Values.mEqualizer = new Equalizer(0, Values.mMusicService.getAudioSessionId());
+                Values.mBassBoost = new BassBoost(0, Values.mMusicService.getAudioSessionId());
+                initButtons();
+                registerReceiver(Values.mHeadSetReceiver, new IntentFilter("android.intent.action.HEADSET_PLUG"));
+                initSeekBar();
+            } else {
+                Toast.makeText(this, "0 song on phone app will not work properly", Toast.LENGTH_LONG).show();
             }
-        });
-        SongAdapter songAdapter = new SongAdapter(this, Values.mSongList.getSongs());
-        mListView.setAdapter(songAdapter);
-        Values.mMusicService = new MusicService(this);
-        Values.mMusicService.setList(Values.mSongList.getSongs());
-        Values.mEqualizer = new Equalizer(0, Values.mMusicService.getAudioSessionId());
-        Values.mBassBoost = new BassBoost(0, Values.mMusicService.getAudioSessionId());
-        initButtons();
-        registerReceiver(Values.mHeadSetReceiver, new IntentFilter("android.intent.action.HEADSET_PLUG"));
-        initSeekBar();
     }
 
     public void playWithOutPermission(){
-        Values.mMediaPlayer = MediaPlayer.create(this, R.raw.music);
-        Values.mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-
-            }
-        });
-
-        Values.mMediaPlayer.setLooping(true);
-        Values.mEqualizer = new Equalizer(0, Values.mMediaPlayer.getAudioSessionId());
-        Values.mEqualizer.setEnabled(Values.mEqualizerTurn);
-        Values.mBassBoost = new BassBoost(0, Values.mMediaPlayer.getAudioSessionId());
-        Values.mBassBoost.setEnabled(Values.mBassBoostTurn);
+            Values.mSongList.scanSong(this, "internal");
+            Values.mMusicService = new MusicService(this);
+            Values.mMusicService.setList(Values.mSongList.getSongs());
+            if(Values.mMusicService.getSizeSong() > 0) {
+            ListView mListView = findViewById(R.id.musicList);
+            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Values.mMusicService.setSongPos(position);
+                }
+            });
+            SongAdapter songAdapter = new SongAdapter(this, Values.mSongList.getSongs());
+            mListView.setAdapter(songAdapter);
+            Values.mEqualizer = new Equalizer(0, Values.mMusicService.getAudioSessionId());
+            Values.mBassBoost = new BassBoost(0, Values.mMusicService.getAudioSessionId());
+            initButtons();
+            registerReceiver(Values.mHeadSetReceiver, new IntentFilter("android.intent.action.HEADSET_PLUG"));
+            initSeekBar();
+        } else {
+            Toast.makeText(this, "0 Music File, app will not work properly", Toast.LENGTH_LONG).show();
+        }
     }
 
     public void initSeekBar() {

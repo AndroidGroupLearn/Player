@@ -109,7 +109,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="3"
             android:text="info"
-            android:id="@+id/info"/>
+            android:id="@+id/information"/>
     </LinearLayout>
 
     <LinearLayout

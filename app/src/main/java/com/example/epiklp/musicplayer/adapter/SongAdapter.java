@@ -56,7 +56,7 @@ public class SongAdapter extends BaseAdapter {
         TextView mArtistName = rowView.findViewById(R.id.nameArtist);
         Song CurentSont = mSong.get(i);
         mSongName.setText(CurentSont.getTitle());
-        mArtistName.setText(CurentSont.getArtit());
+        mArtistName.setText(CurentSont.getArtist());
         return rowView;
     }
 

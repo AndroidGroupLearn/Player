@@ -119,10 +119,10 @@ public class MusicService extends Service
         int duration = mSongs.get(mSongPos).getmDuration();
         time.setText("00:00/" + String.format("%02d:%02d", (duration/(1000 * 60)) % 60 ,
                 (duration/ 1000) % 60));
-        if(mSongs.get(mSongPos).getArtit().equals("unknowon")){
+        if(mSongs.get(mSongPos).getArtist().equals("unknowon")){
             name = mSongs.get(mSongPos).getTitle();
         } else {
-            name = mSongs.get(mSongPos).getArtit() + "-" +
+            name = mSongs.get(mSongPos).getArtist() + "-" +
                     mSongs.get(mSongPos).getTitle();
         }
         nameSong.setText(name);
@@ -177,6 +177,7 @@ public class MusicService extends Service
 
     public void setList(ArrayList<Song> theSongs){
         mSongs = theSongs;
+        setTitle();
     }
 
     public void setShuffle(){
@@ -231,7 +232,9 @@ public class MusicService extends Service
         return mMediaPlayer.getAudioSessionId();
     }
 
-
+    public int getSizeSong(){
+        return mSongs.size();
+    }
 
 
     //Implementation

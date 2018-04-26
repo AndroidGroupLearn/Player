@@ -29,6 +29,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.epiklp.musicplayer.activities.SettingsActivity" />
         </activity>
+        <activity android:name=".activities.InfoActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.epiklp.musicplayer.activities.InfoActivity" />
+        </activity>
         <receiver android:name=".reciver.HeadSetReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.HEADSET_PLUG" />

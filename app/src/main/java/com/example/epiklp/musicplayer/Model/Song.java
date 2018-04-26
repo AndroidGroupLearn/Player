@@ -14,7 +14,7 @@ public class Song {
     private long mId;
     private String mPath;
     private String mFileName;
-    private String mArtit;
+    private String mArtist;
     private String mTitle;
     private String mGenre;
     private String mAlbum;
@@ -39,7 +39,7 @@ public class Song {
     }
 
     public void setArtist(String artist){
-        mArtit = artist;
+        mArtist = artist;
     }
 
     public void setGenre(String genres){
@@ -65,9 +65,9 @@ public class Song {
             return mPath;
     }
 
-    public String getArtit() {
-        if(mArtit != null) {
-            return mArtit;
+    public String getArtist() {
+        if(mArtist != null) {
+            return mArtist;
         } else {
             return "unknown";
         }
@@ -91,6 +91,18 @@ public class Song {
         } else {
             return "unknown";
         }
+    }
+
+    public String getAlbum(){
+        return mAlbum;
+    }
+
+    public int getmYear() {
+        return mYear;
+    }
+
+    public int getTrackNumber(){
+        return mTrackNumber;
     }
 
     public int getmDuration() {
