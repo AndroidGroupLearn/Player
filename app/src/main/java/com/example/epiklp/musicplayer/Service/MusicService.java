@@ -31,6 +31,16 @@ import java.util.Random;
 
 public class MusicService extends Service
         implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener{
+
+
+    public static String BROADCAST_SERVICE_PLAY = "play";
+    public static String BROADCAST_SERVICE_PAUSE = "pause";
+    public static String BROADCAST_SERVICE_NEXT = "next";
+    public static String BROADCAST_SERVICE_PREV = "prev";
+
+
+
+
     //Service
     private final IBinder mMusicService = new MusicBinder();
     private final Activity tmp;

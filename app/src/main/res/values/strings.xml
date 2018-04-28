@@ -6,4 +6,6 @@
     <string name="pause">||</string>
     <string name="message_permission">Musisz zezwolic by aplikacja miałą dotep do twojej muzyki, ktora najdje sie na karcie SD</string>
     <string name="loading">Loading Files</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
 </resources>
